@@ -5,13 +5,16 @@ import android.view.View
 import com.example.user.kotlin2018.R
 import com.example.user.kotlin2018.base.BaseViewModel
 import com.example.user.kotlin2018.model.Post
+import com.example.user.kotlin2018.model.PostDao
 import com.example.user.kotlin2018.network.PostApi
+import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
+import java.util.*
 import javax.inject.Inject
 
-class PostListViewModel: BaseViewModel() {
+class PostListViewModel(private val postDao: PostDao): BaseViewModel() {
 
     @Inject
     lateinit var postApi: PostApi
@@ -36,6 +39,13 @@ class PostListViewModel: BaseViewModel() {
 
 
     private fun loadPost(){
+
+
+        /**
+         * This first implementation retrieves the posts directly in order to display in the UI
+         */
+
+/*
         subscription = postApi.getPost()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -45,6 +55,35 @@ class PostListViewModel: BaseViewModel() {
                         { result -> onRetrievePostListSuccess(result)},
                         { onRetrievePostListError() }
                 )
+*/
+
+
+
+        /**
+         * Self explanatory, here we verify that there is data in local DB, if not we retrieve it remotely
+         */
+
+        subscription = Observable.fromCallable { postDao.all }
+                .concatMap {
+                    dbPostList ->
+                    if (dbPostList.isEmpty())
+                        postApi.getPost().concatMap {
+                            apiPostList -> postDao.insertAll(*apiPostList.toTypedArray())
+                            Observable.just(apiPostList)
+                        }else{
+                        Observable.just(dbPostList)
+                    }
+                }.subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .doOnSubscribe { onRetrievePostListStart() }
+                .doOnTerminate { onRetrievePostListFinish() }
+                .subscribe(
+                        { result -> onRetrievePostListSuccess(result)},
+                        { onRetrievePostListError() }
+                )
+
+
+
     }
 
 

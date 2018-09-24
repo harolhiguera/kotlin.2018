@@ -1,5 +1,8 @@
 package com.example.user.kotlin2018.model
 
+import android.arch.persistence.room.Entity
+import android.arch.persistence.room.PrimaryKey
+
 /**
  * Class which provides a model for post
  * @constructor Sets all properties of the post
@@ -9,5 +12,12 @@ package com.example.user.kotlin2018.model
  * @property body the content of the post
  */
 
+@Entity
+data class Post(
+        val userId: Int,
+        @field:PrimaryKey
+        val id: Int,
+        val title: String,
+        val body: String
+)
 
-data class Post(val userId: Int, val id: Int, val title: String, val body: String)
