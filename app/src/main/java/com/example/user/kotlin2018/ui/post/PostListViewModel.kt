@@ -4,6 +4,7 @@ import android.arch.lifecycle.MutableLiveData
 import android.view.View
 import com.example.user.kotlin2018.R
 import com.example.user.kotlin2018.base.BaseViewModel
+import com.example.user.kotlin2018.model.Post
 import com.example.user.kotlin2018.network.PostApi
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
@@ -20,6 +21,8 @@ class PostListViewModel: BaseViewModel() {
     val loadingVisibility: MutableLiveData<Int> = MutableLiveData()
     var errorMessage:MutableLiveData<Int> = MutableLiveData()
     val errorClickListener = View.OnClickListener { loadPost() }
+
+    val postListAdapter: PostListAdapter = PostListAdapter()
 
 
     init {
@@ -39,7 +42,7 @@ class PostListViewModel: BaseViewModel() {
                 .doOnSubscribe { onRetrievePostListStart() }
                 .doOnTerminate { onRetrievePostListFinish() }
                 .subscribe(
-                        { onRetrievePostListSuccess()},
+                        { result -> onRetrievePostListSuccess(result)},
                         { onRetrievePostListError() }
                 )
     }
@@ -54,8 +57,8 @@ class PostListViewModel: BaseViewModel() {
         loadingVisibility.value = View.GONE
     }
 
-    private fun onRetrievePostListSuccess(){
-
+    private fun onRetrievePostListSuccess(postList: List<Post>){
+        postListAdapter.updatePostList(postList)
     }
 
     private fun onRetrievePostListError(){
